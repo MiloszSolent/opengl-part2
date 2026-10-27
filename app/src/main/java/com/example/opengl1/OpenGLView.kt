@@ -44,8 +44,7 @@ class OpenGLView(val ctx: Context)  :GLSurfaceView(ctx), GLSurfaceView.Renderer 
                 val refAVertex = gpu.getAttribLocation("aVertex")
                 gpu.specifyBufferedDataFormat(refAVertex, fbuf, 0)
                 refUColour = gpu.getUniformLocation("uColour")
-                val red = floatArrayOf(1.0f, 0.0f, 0.0f, 1.0f)
-                gpu.setUniform4FloatArray(refUColour, red)
+               
             }
         } catch (e: IOException) {
             Log.e("OpenGL01", e.stackTraceToString())
