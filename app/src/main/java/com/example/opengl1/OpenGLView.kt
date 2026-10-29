@@ -5,22 +5,28 @@ import android.content.Context
 import javax.microedition.khronos.egl.EGLConfig
 import android.opengl.GLES20
 import android.util.Log
+import freemap.openglwrapper.Camera
+import freemap.openglwrapper.GLMatrix
 import javax.microedition.khronos.opengles.GL10
 import freemap.openglwrapper.GPUInterface
 import freemap.openglwrapper.OpenGLUtils
 import java.io.IOException
 
-class OpenGLView(val ctx: Context)  :GLSurfaceView(ctx), GLSurfaceView.Renderer {
+class OpenGLView(val ctx: Context) : GLSurfaceView(ctx), GLSurfaceView.Renderer {
     init {
         setEGLContextClientVersion(2) // specify OpenGL ES 2.0
         setRenderer(this) // set the renderer for this GLSurfaceView
     }
 
     lateinit var gpu: GPUInterface
+
+    val cam = Camera()
     val viewMatrix = GLMatrix()
     val projMatrix = GLMatrix()
 
     var refUColour = -1
+    var ref_uViewMatrix = -1
+    var ref_uProjectMatrix = -1
 
     // We initialise the rendering here
     override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
@@ -52,8 +58,8 @@ class OpenGLView(val ctx: Context)  :GLSurfaceView(ctx), GLSurfaceView.Renderer 
                 gpu.specifyBufferedDataFormat(refAVertex, fbuf, 0)
                 refUColour = gpu.getUniformLocation("uColour")
 
-                ref_uViewMatrix = gpu.glGetUniformLocation("uView")
-                ref_uProjectMatrix = gpu.glGetUniformLocation("uProj")
+                ref_uViewMatrix = gpu.getUniformLocation("uView")
+                ref_uProjectMatrix = gpu.getUniformLocation("uProj")
             }
         } catch (e: IOException) {
             Log.e("OpenGL01", e.stackTraceToString())
@@ -64,15 +70,21 @@ class OpenGLView(val ctx: Context)  :GLSurfaceView(ctx), GLSurfaceView.Renderer 
     override fun onDrawFrame(unused: GL10) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
 
-        if(refUColour >= 0) {
+        if (refUColour >= 0) {
             viewMatrix.setAsIdentityMatrix()
+
+            viewMatrix.translate(cam.position.x, cam.position.y, cam.position.z)
+
             gpu.sendMatrix(ref_uViewMatrix, viewMatrix)
-            gpu.sendMatrix(ref_uProjectMatrix, projectionMatrix)
+            gpu.sendMatrix(ref_uProjectMatrix, projMatrix)
 
             val red = floatArrayOf(1.0f, 0.0f, 0.0f, 1.0f)
             gpu.setUniform4FloatArray(refUColour, red)
             gpu.drawBufferedTriangles(0, 3)
 
+            val yellow = floatArrayOf(1.0f, 1.0f, 0.0f, 1.0f)
+            gpu.setUniform4FloatArray(refUColour, yellow)
+            gpu.drawBufferedTriangles(3, 3)
         }
     }
 
@@ -82,6 +94,6 @@ class OpenGLView(val ctx: Context)  :GLSurfaceView(ctx), GLSurfaceView.Renderer 
 
         val hfov = 60.0f
         val aspect : Float = w.toFloat() / h
-        projectionMatrix.setProjectionMatrix(hfov, aspect, 0.001f, 100f)
+        projMatrix.setProjectionMatrix(hfov, aspect, 0.001f, 100f)
     }
 }
