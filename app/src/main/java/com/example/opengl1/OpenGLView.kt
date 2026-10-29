@@ -17,6 +17,9 @@ class OpenGLView(val ctx: Context)  :GLSurfaceView(ctx), GLSurfaceView.Renderer 
     }
 
     lateinit var gpu: GPUInterface
+    val viewMatrix = GLMatrix()
+    val projMatrix = GLMatrix()
+
     var refUColour = -1
 
     // We initialise the rendering here
@@ -35,16 +38,22 @@ class OpenGLView(val ctx: Context)  :GLSurfaceView(ctx), GLSurfaceView.Renderer 
                 Log.e("OpenGL01", gpu.lastShaderError)
             } else {
                 val coords = floatArrayOf (
-                    0f, 0f, 0f,
-                    1f, 0f, 0f,
-                    0f, 1f, 0f,
-                        )
+                    0f,0f,-3f,
+                    1f,0f,-3f,
+                    0.5f,1f,-3f,
+
+                    -0.5f, 0f, -6f,
+                    0.5f, 0f, -6f,
+                    0f, 1f, -6f
+                )
                 val fbuf = OpenGLUtils.makeFloatBuffer(coords)
 
                 val refAVertex = gpu.getAttribLocation("aVertex")
                 gpu.specifyBufferedDataFormat(refAVertex, fbuf, 0)
                 refUColour = gpu.getUniformLocation("uColour")
-               
+
+                ref_uViewMatrix = gpu.glGetUniformLocation("uView")
+                ref_uProjectMatrix = gpu.glGetUniformLocation("uProj")
             }
         } catch (e: IOException) {
             Log.e("OpenGL01", e.stackTraceToString())
@@ -56,6 +65,9 @@ class OpenGLView(val ctx: Context)  :GLSurfaceView(ctx), GLSurfaceView.Renderer 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
 
         if(refUColour >= 0) {
+            viewMatrix.setAsIdentityMatrix()
+            gpu.sendMatrix(ref_uViewMatrix, viewMatrix)
+            gpu.sendMatrix(ref_uProjectMatrix, projectionMatrix)
 
             val red = floatArrayOf(1.0f, 0.0f, 0.0f, 1.0f)
             gpu.setUniform4FloatArray(refUColour, red)
@@ -67,5 +79,9 @@ class OpenGLView(val ctx: Context)  :GLSurfaceView(ctx), GLSurfaceView.Renderer 
     // Used if the screen is resized
     override fun onSurfaceChanged(unused: GL10, w: Int, h: Int) {
         GLES20.glViewport(0, 0, w, h)
+
+        val hfov = 60.0f
+        val aspect : Float = w.toFloat() / h
+        projectionMatrix.setProjectionMatrix(hfov, aspect, 0.001f, 100f)
     }
 }
