@@ -61,9 +61,8 @@ class MainActivity : AppCompatActivity() {
             },
             update = {
                 // handle changes to the OpenGLView here, e.g. reset its camera position (not shown)
-                gLView -> gLView.cam.position.x = cameraPos[0]
-                gLView.cam.position.y = cameraPos[1]
-                gLView.cam.position.z = cameraPos[2]
+                gLView -> gLView.oldCam.position = gLView.cam.position.copy()
+                gLView.cam.translate(cameraPos[0], cameraPos[1], cameraPos[2])
             }
         )
     }

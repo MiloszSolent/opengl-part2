@@ -21,6 +21,7 @@ class OpenGLView(val ctx: Context) : GLSurfaceView(ctx), GLSurfaceView.Renderer 
     lateinit var gpu: GPUInterface
 
     val cam = Camera()
+    var oldCam = Camera()
     val viewMatrix = GLMatrix()
     val projMatrix = GLMatrix()
 
@@ -73,7 +74,7 @@ class OpenGLView(val ctx: Context) : GLSurfaceView(ctx), GLSurfaceView.Renderer 
         if (refUColour >= 0) {
             viewMatrix.setAsIdentityMatrix()
 
-            viewMatrix.translate(cam.position.x, cam.position.y, cam.position.z)
+            viewMatrix.translate(cam.position.x - oldCam.position.x, cam.position.y - oldCam.position.y, cam.position.z - oldCam.position.z)
 
             gpu.sendMatrix(ref_uViewMatrix, viewMatrix)
             gpu.sendMatrix(ref_uProjectMatrix, projMatrix)
